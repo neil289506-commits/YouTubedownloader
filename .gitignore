@@ -33,3 +33,10 @@
 /qrc_*.cpp
 /moc_*.cpp
 /ui_*.h
+
+# 排除所有編譯產出的二進位與發布資料夾
+release(cmake)/
+release(qmake)/
+*.exe
+*.dll
+*.qm
