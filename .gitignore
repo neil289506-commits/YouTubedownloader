@@ -1,0 +1,35 @@
+# ====================================================================
+# YTDownloader - CMake 專屬忽略檔案
+# ====================================================================
+
+# CMake 系統生成的快取與組態目錄
+/CMakeFiles/
+/CMakeCache.txt
+/CMakeLists.txt.user
+/cmake_install.cmake
+/Makefile
+/targets.cmake
+
+# Visual Studio 產生器生成的專案與方案檔
+/*.sln
+/*.vcxproj
+/*.vcxproj.filters
+/*.vcxproj.user
+/x64/
+/.vs/
+
+# 編譯輸出與 windeployqt 打包產物
+/bin/
+/lib/
+/Release/
+/Debug/
+/*.exe
+/*.pdb
+/*.ilk
+/*.idb
+
+# Qt 自動生成工具產物
+/YTDownloader_autogen/
+/qrc_*.cpp
+/moc_*.cpp
+/ui_*.h
