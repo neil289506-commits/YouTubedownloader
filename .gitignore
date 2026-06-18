@@ -1,42 +1,52 @@
-# ====================================================================
-# YTDownloader - CMake 專屬忽略檔案
-# ====================================================================
+# =====================================================================
+# YouTube 下載器 Pro - CMake & MSVC 專屬 .gitignore
+# 適合發布至 GitHub，保持開源倉庫乾淨專業
+# =====================================================================
 
-# CMake 系統生成的快取與組態目錄
-/CMakeFiles/
-/CMakeCache.txt
-/CMakeLists.txt.user
-/cmake_install.cmake
-/Makefile
-/targets.cmake
-
-# Visual Studio 產生器生成的專案與方案檔
-/*.sln
-/*.vcxproj
-/*.vcxproj.filters
-/*.vcxproj.user
-/x64/
-/.vs/
-
-# 編譯輸出與 windeployqt 打包產物
-/bin/
-/lib/
+# 1. 忽略 CMake 核心建構輸出與快取資料夾
+/build/
 /Release/
+/out/
+CMakeCache.txt
+CMakeFiles/
+CMakeSettings.json
+cmake_install.cmake
+Makefile
+*.cmake
+
+# 2. 忽略 Visual Studio / MSVC 產生的隱藏暫存與快取
+/.vs/
+/x64/
 /Debug/
-/*.exe
-/*.pdb
-/*.ilk
-/*.idb
+*.sln
+*.vcxproj
+*.filters
+*.user
+*.suo
+*.pdb
+*.lkg
+*.ilk
+*.ipdb
+*.iobj
 
-# Qt 自動生成工具產物
-/YTDownloader_autogen/
-/qrc_*.cpp
+# 3. 忽略 Qt 產生的自動化中間碼檔案 (MOC / RCC / UIC)
 /moc_*.cpp
+/qrc_*.cpp
 /ui_*.h
+*.moc
+.qmake.stash
 
-# 排除所有編譯產出的二進位與發布資料夾
-release(cmake)/
-release(qmake)/
+# 4. 忽略動態下載的外部二進位制組件與壓縮包
 *.exe
+*.zip
 *.dll
-*.qm
+/ffmpeg_temp_dir/
+
+# 5. 忽略多餘或重複的備份圖標檔 (只在 GitHub 保留主圖標 app.ico)
+icon.ico
+
+# 6. 作業系統與 IDE 暫存
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

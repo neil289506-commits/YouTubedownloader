@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QStatusBar>
+#include <QStandardPaths>
 #include <QMainWindow>
 #include <QLineEdit>
 #include <QPushButton>
@@ -12,6 +14,7 @@
 #include <QProgressBar>
 #include <memory>
 #include "downloadworker.h"
+#include "settingsdialog.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -31,12 +34,14 @@ private slots:
     void onBrowseFolder();
     void onOpenSettings();
     void onRemoveSelected();
+    void applySettingsChanges();
 
 private:
     void setupUI();
     void loadSettings();
     void saveSettings();
     void addLogEntry(const QString &msg);
+    void applyFontSettings();
     
     // UI Components
     QLineEdit *urlInput;
@@ -52,6 +57,12 @@ private:
     // Worker thread
     QThread *downloadThread;
     DownloadWorker *worker;
+    
+    // Settings
+    SettingsDialog *settingsDialog;
+    int threadCount = 4;
+    QString fontFamily = "Microsoft JhengHei UI";
+    int fontSize = 10;
     
     bool isDownloading = false;
 };

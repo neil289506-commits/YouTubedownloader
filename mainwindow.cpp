@@ -1,8 +1,4 @@
 #include "mainwindow.h"
-#include <QTime>
-#include <QStatusBar>
-#include <QStandardPaths>
-#include <QDateTime>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
@@ -12,24 +8,31 @@
 #include <QDateTime>
 #include <QMessageBox>
 #include <QThread>
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), downloadThread(nullptr), worker(nullptr) {
+    : QMainWindow(parent), downloadThread(nullptr), worker(nullptr), settingsDialog(nullptr) {
     
     setWindowTitle("YouTube 下載器 Pro");
     setWindowIcon(QIcon(":/icon.ico"));
-    setMinimumSize(700, 750);
+    setMinimumSize(750, 850);
     
     setupUI();
     loadSettings();
     
     // 創建下載線程
+   // 創建下載線程
     downloadThread = new QThread(this);
-    worker = new DownloadWorker();
+    
+    // 💡 修正點：將 parent 改為 nullptr！這樣 moveToThread 才會真正生效，介面才不會卡死
+    worker = new DownloadWorker(nullptr); 
     worker->moveToThread(downloadThread);
     
+    // 訊號與槽連線
     connect(downloadThread, &QThread::finished, worker, &QObject::deleteLater);
     connect(this, &MainWindow::destroyed, downloadThread, &QThread::quit);
+    connect(downloadThread, &QThread::finished, downloadThread, &QObject::deleteLater); // 安全釋放執行緒
+    
     connect(worker, &DownloadWorker::finished, this, &MainWindow::onDownloadFinished);
     connect(worker, &DownloadWorker::progressUpdate, this, &MainWindow::onProgressUpdate);
     connect(worker, &DownloadWorker::logMessage, this, &MainWindow::onLogMessage);
@@ -189,7 +192,7 @@ void MainWindow::setupUI() {
     QHBoxLayout *logBtnLayout = new QHBoxLayout;
     QPushButton *clearBtn = new QPushButton("清除日誌");
     connect(clearBtn, &QPushButton::clicked, logBox, &QTextEdit::clear);
-    QPushButton *exportBtn = new QPushButton("匯出日誌");
+    QPushButton *exportBtn = new QPushButton("💾 匯出日誌");
     logBtnLayout->addStretch();
     logBtnLayout->addWidget(clearBtn);
     logBtnLayout->addWidget(exportBtn);
@@ -212,7 +215,6 @@ void MainWindow::onAddUrl() {
         return;
     }
     
-    // 檢查是否已存在
     for (int i = 0; i < urlTable->rowCount(); ++i) {
         if (urlTable->item(i, 1)->text() == url) {
             QMessageBox::information(this, "提示", "此連結已在列表中");
@@ -253,46 +255,38 @@ void MainWindow::onRemoveSelected() {
 }
 
 void MainWindow::onStartDownload() {
-    if (urlTable->rowCount() == 0) {
-        QMessageBox::warning(this, "警告", "請至少新增一個連結");
-        return;
-    }
-    
-    QStringList selectedUrls;
+    QStringList urls;
     for (int i = 0; i < urlTable->rowCount(); ++i) {
         if (urlTable->item(i, 0)->checkState() == Qt::Checked) {
-            selectedUrls << urlTable->item(i, 1)->text();
+            urls.append(urlTable->item(i, 1)->text());
         }
     }
     
-    if (selectedUrls.isEmpty()) {
-        QMessageBox::warning(this, "警告", "請選擇至少一個要下載的連結");
+    if (urls.isEmpty()) {
+        QMessageBox::warning(this, "警告", "請先新增並勾選至少一個 YouTube 連結！");
         return;
     }
     
     DownloadConfig config;
-    config.path = pathInput->text();
+    config.path = pathInput->text().trimmed();
     config.format = formatCombo->currentText();
     config.resolution = resolutionCombo->currentText();
     config.fps = fpsCombo->currentText().toInt();
     config.playlist = playlistCheck->isChecked();
     config.autoSubtitles = autoSubtitlesCheck->isChecked();
     config.autoTranslate = autoTranslateCheck->isChecked();
-    config.urls = selectedUrls;
+    config.threadCount = threadCount; // 從設定中抓取的實際線程
+    config.urls = urls;
     
-    isDownloading = true;
     downloadBtn->setEnabled(false);
     pauseBtn->setEnabled(true);
     cancelBtn->setEnabled(true);
-    progressBar->setValue(0);
     
-    addLogEntry(QString("開始下載 %1 個項目 | 格式: %2 | 分辨率: %3")
-        .arg(selectedUrls.count()).arg(config.format).arg(config.resolution));
-    
-    QMetaObject::invokeMethod(worker, "startDownload", Qt::QueuedConnection,
-                            Q_ARG(DownloadConfig, config));
+    // 透過元物件非同步安全呼叫子線程的 Slot
+    QMetaObject::invokeMethod(worker, "startDownload", 
+                              Qt::QueuedConnection, 
+                              Q_ARG(DownloadConfig, config));
 }
-
 void MainWindow::onPauseDownload() {
     if (isDownloading) {
         QMetaObject::invokeMethod(worker, "pauseDownload", Qt::QueuedConnection);
@@ -346,18 +340,42 @@ void MainWindow::onBrowseFolder() {
 }
 
 void MainWindow::onOpenSettings() {
-    QMessageBox::information(this, "設定",
-        "進階設定功能\n\n"
-        "• 代理伺服器\n"
-        "• Cookie 設定\n"
-        "• 下載速度限制\n"
-        "• 檔案命名規則\n\n"
-        "此功能將在下一版本實現");
+    if (!settingsDialog) {
+        settingsDialog = new SettingsDialog(this);
+    }
+    
+    settingsDialog->setThreadCount(threadCount);
+    settingsDialog->setFontFamily(fontFamily);
+    settingsDialog->setFontSize(fontSize);
+    settingsDialog->setDownloadPath(pathInput->text());
+    
+    if (settingsDialog->exec() == QDialog::Accepted) {
+        applySettingsChanges();
+    }
+}
+
+void MainWindow::applySettingsChanges() {
+    if (settingsDialog) {
+        threadCount = settingsDialog->getThreadCount();
+        fontFamily = settingsDialog->getFontFamily();
+        fontSize = settingsDialog->getFontSize();
+        
+        pathInput->setText(settingsDialog->getDownloadPath());
+        applyFontSettings();
+        saveSettings();
+        
+        addLogEntry(QString("⚙️ 設定已更新 | 線程: %1 | 字體: %2 %3pt")
+            .arg(threadCount).arg(fontFamily).arg(fontSize));
+    }
+}
+
+void MainWindow::applyFontSettings() {
+    QFont appFont(fontFamily, fontSize);
+    qApp->setFont(appFont);
 }
 
 void MainWindow::addLogEntry(const QString &msg) {
-    // QTime 才有唯一的 currentTime()
-    QString timestamp = QTime::currentTime().toString("hh:mm:ss");
+    QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
     logBox->append(QString("[%1] %2").arg(timestamp, msg));
 }
 
@@ -371,6 +389,11 @@ void MainWindow::loadSettings() {
     playlistCheck->setChecked(settings.value("playlist", true).toBool());
     autoSubtitlesCheck->setChecked(settings.value("subtitles", false).toBool());
     
+    threadCount = settings.value("threadCount", 4).toInt();
+    fontFamily = settings.value("fontFamily", "Microsoft JhengHei UI").toString();
+    fontSize = settings.value("fontSize", 10).toInt();
+    
+    applyFontSettings();
     addLogEntry("✓ 設定已加載");
 }
 
@@ -382,4 +405,7 @@ void MainWindow::saveSettings() {
     settings.setValue("fps", fpsCombo->currentText());
     settings.setValue("playlist", playlistCheck->isChecked());
     settings.setValue("subtitles", autoSubtitlesCheck->isChecked());
+    settings.setValue("threadCount", threadCount);
+    settings.setValue("fontFamily", fontFamily);
+    settings.setValue("fontSize", fontSize);
 }

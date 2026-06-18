@@ -1,0 +1,43 @@
+// =====================================================================
+// Windows Resource Executable Configuration
+// 負責為編譯出來的 .exe 執行檔注入圖標與版本詳細資訊
+// =====================================================================
+
+#include <windows.h>
+
+// 1. 注入 .exe 應用程式圖標 (IDI_ICON1 是 Windows 預設的標準識別名稱)
+IDI_ICON1               ICON    DISCARDABLE     "app.ico"
+
+// 2. 注入檔案滑鼠右鍵「詳細資料」版本資訊
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,0,1,0
+ PRODUCTVERSION 2,0,1,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040404b0" // 繁體中文 (Taiwan) UTF-16 編碼
+        BEGIN
+            VALUE "CompanyName", "Neil Studio"
+            VALUE "FileDescription", "YouTube 下載器 Pro (Qt6 x64 高速版)"
+            VALUE "FileVersion", "2.0.1.0"
+            VALUE "InternalName", "YTDownloader.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Neil. All rights reserved."
+            VALUE "OriginalFilename", "YTDownloader.exe"
+            VALUE "ProductName", "YouTube 下載器 Pro"
+            VALUE "ProductVersion", "2.0.1.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x404, 1200
+    END
+END

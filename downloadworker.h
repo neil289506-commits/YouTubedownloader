@@ -3,12 +3,14 @@
 #include <QObject>
 #include <QString>
 #include <QProcess>
+#include <QStringList>
 
 struct DownloadConfig {
     QString path;
     QString format;
     QString resolution;
     int fps;
+    int threadCount;        
     bool playlist;
     bool autoSubtitles;
     bool autoTranslate;
@@ -19,11 +21,11 @@ class DownloadWorker : public QObject {
     Q_OBJECT
 
 public:
-    explicit DownloadWorker(QObject *parent = nullptr);
+    explicit DownloadWorker(QObject *parent = nullptr); // 💡 修正：標準 Qt 建構子
     ~DownloadWorker();
 
 public slots:
-    void startDownload(const DownloadConfig &config);
+    void startDownload(const DownloadConfig &config); // 💡 與實作檔、invokeMethod 參數完全對齊
     void pauseDownload();
     void cancelDownload();
 
