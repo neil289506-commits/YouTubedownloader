@@ -1,0 +1,52 @@
+# =====================================================================
+# YouTube 下載器 Pro - CMake & MSVC 專屬 .gitignore
+# 適合發布至 GitHub，保持開源倉庫乾淨專業
+# =====================================================================
+
+# 1. 忽略 CMake 核心建構輸出與快取資料夾
+/build/
+/Release/
+/out/
+CMakeCache.txt
+CMakeFiles/
+CMakeSettings.json
+cmake_install.cmake
+Makefile
+*.cmake
+
+# 2. 忽略 Visual Studio / MSVC 產生的隱藏暫存與快取
+/.vs/
+/x64/
+/Debug/
+*.sln
+*.vcxproj
+*.filters
+*.user
+*.suo
+*.pdb
+*.lkg
+*.ilk
+*.ipdb
+*.iobj
+
+# 3. 忽略 Qt 產生的自動化中間碼檔案 (MOC / RCC / UIC)
+/moc_*.cpp
+/qrc_*.cpp
+/ui_*.h
+*.moc
+.qmake.stash
+
+# 4. 忽略動態下載的外部二進位制組件與壓縮包
+*.exe
+*.zip
+*.dll
+/ffmpeg_temp_dir/
+
+# 5. 忽略多餘或重複的備份圖標檔 (只在 GitHub 保留主圖標 app.ico)
+icon.ico
+
+# 6. 作業系統與 IDE 暫存
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
